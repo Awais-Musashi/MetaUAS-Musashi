@@ -2,7 +2,7 @@
 # metauas on mvtec with 256x256 inputs
 model_name='weights/metauas-256.ckpt'
 test_json='./data/MVTec-AD/test.json'
-image_dir='../../datasets/mvtec/'
+image_dir='/home/awais/Datasets/mvtec/'
 for seed in 1 3 5 7 9
 do
       prompt_json="./data/MVTec-AD/oneprompt_seed${seed}.json"
@@ -31,7 +31,7 @@ CUDA_VISIBLE_DEVICES="0" python3 test.py \
 # metauas on visa with 512x512 inputs
 model_name='weights/metauas-512.ckpt'
 test_json='./data/VisA-AD/test.json'
-image_dir='../../datasets/visa/'
+image_dir='/home/awais/Datasets/visa/'
 for seed in 1 3 5 7 9
 do
       prompt_json="./data/VisA-AD/oneprompt_seed${seed}.json"
@@ -57,7 +57,7 @@ CUDA_VISIBLE_DEVICES="0" python3 test.py \
 # metauas on goodsad with 512x512 inputs
 model_name='weights/metauas-512.ckpt'
 test_json='./data/GoodsAD/test.json'
-image_dir='/home/tione/notebook/datasets/LSAD/GoodsAD/'
+image_dir='/home/awais/Datasets/LSAD/GoodsAD/'
 for seed in 1 3 5 7 9
 do
       prompt_json="./data/GoodsAD/oneprompt_seed${seed}.json"

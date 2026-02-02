@@ -1,0 +1,82 @@
+{
+  "run": {
+    "timestamp": "20260126_162221_metauas",
+    "model": {
+      "module": "metauas_benchmark_adapter",
+      "class": "MetaUASAdapter",
+      "name": "metauas"
+    },
+    "one_shot": true,
+    "data_dir": "/home/awais/Datasets/benchmark_images",
+    "reference_dir": "/home/awais/Datasets/gm_good_images",
+    "limit": 0,
+    "batch_size": 1
+  },
+  "model_load_time_s": 3.012264025001059,
+  "warmup_time_s": 0.3820430279993161,
+  "memory": {
+    "preprocess_peak_rss_bytes": 4733964288,
+    "inference_peak_rss_bytes": 4768407552,
+    "rss_end_bytes": 4680962048,
+    "vram_peak_bytes": 1143545856
+  },
+  "summary": {
+    "counts": {
+      "images": 227
+    },
+    "io_time_s": {
+      "avg": 0.0001722216344558242,
+      "p50": 0.0001452249998692423,
+      "p95": 0.00031520150114374687,
+      "p99": 0.0007828796398098352
+    },
+    "preprocess_time_s": {
+      "avg": 0.12243801348026684,
+      "p50": 0.11939988399899448,
+      "p95": 0.15951917130223592,
+      "p99": 0.18094548264154584
+    },
+    "embedding_time_s": {
+      "avg": null,
+      "p50": null,
+      "p95": null,
+      "p99": null
+    },
+    "query_time_s": {
+      "avg": null,
+      "p50": null,
+      "p95": null,
+      "p99": null
+    },
+    "update_time_s": {
+      "avg": null,
+      "p50": null,
+      "p95": null,
+      "p99": null
+    },
+    "inference_time_s": {
+      "avg": 0.09395073353295473,
+      "p50": 0.0965328070014948,
+      "p95": 0.1183085137996386,
+      "p99": 0.12668012560068748
+    },
+    "postprocess_time_s": {
+      "avg": 0.009359023740084581,
+      "p50": 0.008237919999373844,
+      "p95": 0.014570713198554585,
+      "p99": 0.02082211063963769
+    },
+    "e2e_time_s": {
+      "avg": 0.22591999238776198,
+      "p50": 0.22981377100222744,
+      "p95": 0.2757216668014735,
+      "p99": 0.2936748657387943
+    }
+  },
+  "batch": {
+    "batch_size": 1,
+    "throughput_records_per_s": null,
+    "batch_latency_s": null
+  },
+  "reference": {}
+}

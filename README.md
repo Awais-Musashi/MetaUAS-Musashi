@@ -30,6 +30,11 @@ You could also deploy the demo application to your local CPU/GPU server using th
 pip install -r requirements.txt
 python app.py
 ```
+If you hit PyTorch import errors (for example `get_class_if_classified_error` or `float8_e4m3fnuz`), do a clean reinstall to avoid mixed Torch files:
+```
+pip uninstall -y torch torchvision torchaudio
+pip install --no-cache-dir --force-reinstall -r requirements.txt
+```
 
 ## Evaluation on MVTec/VisA/GoodsAD
 ```

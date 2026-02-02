@@ -1,0 +1,28 @@
+{
+  "args": {
+    "model_module": "metauas_benchmark_adapter",
+    "model_class": "MetaUASAdapter",
+    "model_config": null,
+    "model_kwargs": "{\"checkpoint\": \"weights/metauas-512.ckpt\", \"image_size\": 512, \"reference_dir\": \"/home/awais/Datasets/gm_good_images\", \"prompt_mode\": \"first\", \"good_images_dir\": \"/home/awais/Datasets/gm_good_images\"}",
+    "data_dir": "/home/awais/Datasets/benchmark_images",
+    "reference_dir": "/home/awais/Datasets/gm_good_images",
+    "one_shot": false,
+    "limit": 0,
+    "warmup": 1,
+    "batch_size": 1,
+    "enable_embeddings": false,
+    "update_count": 0,
+    "async_preprocess": true,
+    "prefetch_size": 64,
+    "async_save": true,
+    "save_queue_size": 300,
+    "results_dir": "results"
+  },
+  "adapter_config": {
+    "checkpoint": "weights/metauas-512.ckpt",
+    "image_size": 512,
+    "reference_dir": "/home/awais/Datasets/gm_good_images",
+    "prompt_mode": "first",
+    "good_images_dir": "/home/awais/Datasets/gm_good_images"
+  }
+}
