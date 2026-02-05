@@ -17,7 +17,8 @@ from torchvision.transforms.functional import pil_to_tensor
 from metauas import MetaUAS, normalize, safely_load_state_dict
 
 QUERY_IMAGE = "/home/awais/Datasets/analyze/query.jpg"
-FOLDER = "/home/awais/Datasets/gm_good_images"
+# Root folder containing per-part subfolders (e.g., .../134/*.jpg).
+GOOD_IMAGES_ROOT = "/home/awais/Datasets/gm_good_images_sorted"
 DEFECT_FOLDER = "/home/awais/Datasets/gm_defects"
 
 MODEL_NAME = "ViT-B-32"
@@ -27,7 +28,7 @@ BATCH_SIZE = 256
 NUM_WORKERS = 6
 EXTS = {".jpg", ".jpeg", ".png", ".webp", ".bmp", ".tif", ".tiff"}
 
-# Save cache to: FOLDER/cache/{paths.json, embeds.pt}
+# Save cache to: <part_folder>/cache/{paths.json, embeds.pt}
 CACHE_SUBDIR = "cache"
 CACHE_PATHS = "paths.json"
 CACHE_EMBEDS = "embeds.pt"
@@ -72,6 +73,26 @@ def list_images(folder: str):
     return sorted(set(paths))
 
 
+def extract_leading_number(path: Path) -> int:
+    digits = ""
+    for ch in path.name:
+        if ch.isdigit():
+            digits += ch
+        else:
+            break
+    if not digits:
+        raise ValueError(f"No leading digits found in filename: {path.name}")
+    return int(digits)
+
+
+def select_good_dir_for_path(good_root: Path, image_path: Path) -> Path:
+    part_num = extract_leading_number(image_path)
+    candidate = good_root / str(part_num)
+    if candidate.exists() and candidate.is_dir():
+        return candidate
+    raise FileNotFoundError(f"No folder for file number {part_num} under: {good_root}")
+
+
 class ImgDS(Dataset):
     def __init__(self, paths, preprocess):
         self.paths = paths
@@ -88,7 +109,18 @@ class ImgDS(Dataset):
 
 @torch.inference_mode()
 def build_cache(img_paths, cache_paths_file: Path, cache_embeds_file: Path, model, preprocess, device: str):
-    ds = ImgDS(img_paths, preprocess)
+    valid_paths = []
+    for p in img_paths:
+        try:
+            Image.open(p).verify()
+        except Exception:
+            print(f"skip_bad_image: {p}")
+            continue
+        valid_paths.append(p)
+    if not valid_paths:
+        raise FileNotFoundError(f"No valid images found in: {cache_paths_file.parent}")
+
+    ds = ImgDS(valid_paths, preprocess)
     dl = DataLoader(
         ds,
         batch_size=BATCH_SIZE,
@@ -229,24 +261,10 @@ def main():
     if not Path(METAUAS_CHECKPOINT).exists():
         raise FileNotFoundError(f"METAUAS_CHECKPOINT not found: {METAUAS_CHECKPOINT}")
 
-    cache_dir = Path(FOLDER) / CACHE_SUBDIR
-    cache_dir.mkdir(parents=True, exist_ok=True)
-    cache_paths_file = cache_dir / CACHE_PATHS
-    cache_embeds_file = cache_dir / CACHE_EMBEDS
-
     model, _, preprocess = open_clip.create_model_and_transforms(
         MODEL_NAME, pretrained=PRETRAINED
     )
     model = model.to(device).eval()
-
-    if cache_paths_file.exists() and cache_embeds_file.exists():
-        paths, embeds = load_cache(cache_paths_file, cache_embeds_file)
-        embeds = embeds.to(device, non_blocking=True)
-    else:
-        img_paths = list_images(FOLDER)
-        if not img_paths:
-            raise FileNotFoundError(f"No images found in FOLDER: {FOLDER}")
-        paths, embeds = build_cache(img_paths, cache_paths_file, cache_embeds_file, model, preprocess, device)
 
     autocast_ctx = (
         torch.autocast(device_type="cuda", dtype=torch.float16)
@@ -258,7 +276,32 @@ def main():
         raise FileNotFoundError(f"No images found in DEFECT_FOLDER: {DEFECT_FOLDER}")
 
     output_dir = Path(OUTPUT_DIR)
+    good_root = Path(GOOD_IMAGES_ROOT)
+    if not good_root.exists():
+        raise FileNotFoundError(f"GOOD_IMAGES_ROOT not found: {good_root}")
+    clip_cache: dict[str, tuple[list[str], torch.Tensor]] = {}
+
     for defect_path in defect_paths:
+        good_dir = select_good_dir_for_path(good_root, defect_path)
+        cache_key = str(good_dir.resolve())
+        cached = clip_cache.get(cache_key)
+        if cached is None:
+            cache_dir = good_dir / CACHE_SUBDIR
+            cache_dir.mkdir(parents=True, exist_ok=True)
+            cache_paths_file = cache_dir / CACHE_PATHS
+            cache_embeds_file = cache_dir / CACHE_EMBEDS
+            if cache_paths_file.exists():
+                cache_paths_file.unlink()
+            if cache_embeds_file.exists():
+                cache_embeds_file.unlink()
+            img_paths = list_images(str(good_dir))
+            if not img_paths:
+                raise FileNotFoundError(f"No images found in folder: {good_dir}")
+            paths, embeds = build_cache(img_paths, cache_paths_file, cache_embeds_file, model, preprocess, device)
+            clip_cache[cache_key] = (paths, embeds)
+        else:
+            paths, embeds = cached
+
         qimg = Image.open(defect_path).convert("RGB")
         q = preprocess(qimg).unsqueeze(0).to(device)
         with autocast_ctx:

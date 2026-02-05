@@ -20,13 +20,19 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--reference-dir",
-        default="/home/awais/Datasets/gm_good_images",
+        default=None,
         help="Folder of normal images for prompt selection",
     )
     parser.add_argument(
         "--good-images-dir",
-        default="/home/awais/Datasets/gm_good_images",
+        default=None,
         help="Folder of good images for CLIP similarity prompt selection",
+    )
+    parser.add_argument(
+        "--use-sorted-good-images",
+        default=False,
+        action=argparse.BooleanOptionalAction,
+        help="Use sorted good images for nearest-neighbor prompts",
     )
     parser.add_argument("--async-preprocess", action="store_true", help="Preprocess in a background worker")
     parser.add_argument("--prefetch-size", type=int, default=32, help="Async preprocess queue size")
@@ -56,6 +62,17 @@ def main() -> None:
     defect_dir = Path(args.defect_dir)
     if not defect_dir.exists():
         raise FileNotFoundError(f"defect-dir not found: {defect_dir}")
+
+    if args.reference_dir is None or args.good_images_dir is None:
+        good_root = (
+            "/home/awais/Datasets/gm_good_images_sorted"
+            if args.use_sorted_good_images
+            else "/home/awais/Datasets/gm_good_images"
+        )
+        if args.reference_dir is None:
+            args.reference_dir = good_root
+        if args.good_images_dir is None:
+            args.good_images_dir = good_root
 
     if args.prompt_path:
         prompt_path = Path(args.prompt_path)

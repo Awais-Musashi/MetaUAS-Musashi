@@ -377,8 +377,11 @@ def benchmark_images(
 
     warmup_time = None
     if warmup_count > 0 and image_paths:
-        sample_bytes = read_bytes(image_paths[0])
-        pre, _ = timed(adapter.preprocess, sample_bytes)
+        if hasattr(adapter, "preprocess_path"):
+            pre, _ = timed(adapter.preprocess_path, image_paths[0])
+        else:
+            sample_bytes = read_bytes(image_paths[0])
+            pre, _ = timed(adapter.preprocess, sample_bytes)
         warm_start = time.perf_counter()
         for _ in range(warmup_count):
             adapter.warmup(pre.get("input"))
@@ -408,9 +411,13 @@ def benchmark_images(
                 raise StopIteration
             return item
         path = image_paths[idx]
-        img_bytes, io_t = timed(read_bytes, path)
-        mem_peak_pre = max(mem_peak_pre, get_rss_bytes(proc))
-        pre, pre_t = timed(adapter.preprocess, img_bytes)
+        if hasattr(adapter, "preprocess_path"):
+            pre, pre_t = timed(adapter.preprocess_path, path)
+            io_t = 0.0
+        else:
+            img_bytes, io_t = timed(read_bytes, path)
+            mem_peak_pre = max(mem_peak_pre, get_rss_bytes(proc))
+            pre, pre_t = timed(adapter.preprocess, img_bytes)
         pre["__timing__"] = {"io_s": io_t, "preprocess_s": pre_t}
         return path, io_t, pre
 
@@ -695,6 +702,9 @@ def main() -> None:
         async_save=args.async_save,
         save_queue_size=args.save_queue_size,
     )
+
+    if hasattr(adapter, "report_nn_mismatches"):
+        adapter.report_nn_mismatches()
 
     batch_metrics = benchmark_batch_throughput(adapter, image_paths, args.batch_size)
 
